@@ -274,10 +274,10 @@ Fitur yang bisa ditambahkan di masa depan:
 
 Jika ada pertanyaan atau ingin melanjutkan pengembangan:
 
-- **Author**: [Nama Anda]
-- **Email**: [email@example.com]
-- **GitHub**: [github.com/username]
-- **Dibuat**: 2024
+- **Author**: [D6CpeR]
+- **Email**: [d6cper@gmail.com]
+- **GitHub**: [github.com/d6cper-6]
+- **Dibuat**: 2026
 - **Versi**: 1.0.0
 
 ---
