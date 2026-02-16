@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Detail Pasien - Klinik UMKM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+        
+        /* Navbar */
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: background 0.3s;
+            text-decoration: none;
+            color: #667eea;
+        }
+        
+        .back-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        h1 {
+            font-size: 20px;
+            color: #333;
+        }
+        
+        /* Container */
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        /* Action Buttons */
+        .action-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-print, .btn-pdf, .btn-back {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-print {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-print:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        .btn-pdf {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-pdf:hover {
+            background: #e53935;
+            transform: translateY(-2px);
+        }
+        
+        .btn-back {
+            background: #9e9e9e;
+            color: white;
+        }
+        
+        .btn-back:hover {
+            background: #757575;
+        }
+        
+        /* Kartu Pasien */
+        .patient-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .card-header h2 {
+            color: #333;
+            font-size: 28px;
+        }
+        
+        .rm-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        /* Grid Info */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .info-item {
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+        
+        .info-label {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        /* Section */
+        .section {
+            margin-top: 30px;
+        }
+        
+        .section-title {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        /* Riwayat Kunjungan */
+        .visit-history {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .visit-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .visit-date {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        /* Print styles */
+        @media print {
+            .navbar, .action-bar, .back-btn, .btn-print, .btn-pdf, .btn-back {
+                display: none;
+            }
+            
+            .container {
+                margin: 0;
+                padding: 20px;
+            }
+            
+            .patient-card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-bar {
+                flex-direction: column;
+            }
+            
+            .btn-print, .btn-pdf, .btn-back {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="list-pasien.html" class="back-btn">← Kembali</a>
+            <h1 id="clinicName">KLINIK UMKM</h1>
+            <div style="width: 40px;"></div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Action Buttons -->
+        <div class="action-bar">
+            <button class="btn-print" onclick="window.print()">
+                🖨️ Print ke Printer
+            </button>
+            <button class="btn-pdf" onclick="printToPDF()">
+                📄 Simpan sebagai PDF
+            </button>
+            <a href="list-pasien.html" class="btn-back">
+                ⬅️ Kembali ke Daftar
+            </a>
+        </div>
+        
+        <!-- Kartu Pasien -->
+        <div class="patient-card" id="patientCard">
+            <div class="card-header">
+                <h2 id="namaPasien">-</h2>
+                <div class="rm-number" id="noRM">-</div>
+            </div>
+            
+            <!-- Informasi Pribadi -->
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">NIK</div>
+                    <div class="info-value" id="nik">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">No. BPJS</div>
+                    <div class="info-value" id="bpjs">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tanggal Daftar</div>
+                    <div class="info-value" id="tanggalDaftar">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tempat, Tgl Lahir</div>
+                    <div class="info-value" id="ttl">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Jenis Kelamin</div>
+                    <div class="info-value" id="jenisKelamin">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Golongan Darah</div>
+                    <div class="info-value" id="golDarah">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">No. Telepon</div>
+                    <div class="info-value" id="noTelp">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Email</div>
+                    <div class="info-value" id="email">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Pekerjaan</div>
+                    <div class="info-value" id="pekerjaan">-</div>
+                </div>
+            </div>
+            
+            <!-- Alamat Lengkap -->
+            <div class="section">
+                <h3 class="section-title">📍 Alamat</h3>
+                <div class="info-item">
+                    <div class="info-value" id="alamatLengkap">-</div>
+                </div>
+            </div>
+            
+            <!-- Informasi Medis -->
+            <div class="section">
+                <h3 class="section-title">🏥 Informasi Medis</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Alergi</div>
+                        <div class="info-value" id="alergi">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Catatan Awal</div>
+                        <div class="info-value" id="catatanAwal">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Riwayat Kunjungan -->
+            <div class="section">
+                <h3 class="section-title">📅 Riwayat Kunjungan</h3>
+                <div class="visit-history" id="riwayatKunjungan">
+                    <p>Belum ada riwayat kunjungan</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Cek login
+        if (!sessionStorage.getItem('isLoggedIn')) {
+            window.location.href = 'index.html';
+        }
+        
+        // Set nama klinik
+        document.getElementById('clinicName').textContent = localStorage.getItem('clinicName') || 'KLINIK UMKM';
+        
+        // Ambil ID pasien dari URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const patientId = urlParams.get('id');
+        
+        // Load data pasien
+        function loadPatientDetail() {
+            const patients = JSON.parse(localStorage.getItem('patients') || '[]');
+            const patient = patients.find(p => p.noRm === patientId);
+            
+            if (!patient) {
+                alert('Data pasien tidak ditemukan!');
+                window.location.href = 'list-pasien.html';
+                return;
+            }
+            
+            // Isi data
+            document.getElementById('namaPasien').textContent = patient.namaLengkap;
+            document.getElementById('noRM').textContent = patient.noRm;
+            document.getElementById('nik').textContent = patient.nik || '-';
+            document.getElementById('bpjs').textContent = patient.bpjs || '-';
+            document.getElementById('tanggalDaftar').textContent = formatDate(patient.tanggalDaftar);
+            document.getElementById('ttl').textContent = `${patient.tempatLahir || '-'}, ${formatDate(patient.tanggalLahir)}`;
+            document.getElementById('jenisKelamin').textContent = patient.jenisKelamin;
+            document.getElementById('golDarah').textContent = patient.golDarah || '-';
+            document.getElementById('noTelp').textContent = patient.noTelp;
+            document.getElementById('email').textContent = patient.email || '-';
+            document.getElementById('pekerjaan').textContent = patient.pekerjaan || '-';
+            
+            // Alamat lengkap
+            const alamat = [
+                patient.alamat,
+                patient.kelurahan,
+                patient.kecamatan,
+                patient.kota,
+                patient.provinsi
+            ].filter(Boolean).join(', ');
+            document.getElementById('alamatLengkap').textContent = alamat || '-';
+            
+            // Informasi medis
+            document.getElementById('alergi').textContent = patient.alergi || 'Tidak ada alergi';
+            document.getElementById('catatanAwal').textContent = patient.catatanAwal || 'Tidak ada catatan';
+            
+            // Riwayat kunjungan (contoh)
+            loadVisitHistory(patient.noRm);
+        }
+        
+        // Format tanggal
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+        }
+        
+        // Load riwayat kunjungan (sementara contoh)
+        function loadVisitHistory(noRm) {
+            const visits = JSON.parse(localStorage.getItem(`visits_${noRm}`) || '[]');
+            const container = document.getElementById('riwayatKunjungan');
+            
+            if (visits.length === 0) {
+                container.innerHTML = '<p>Belum ada riwayat kunjungan</p>';
+                return;
+            }
+            
+            container.innerHTML = visits.map(visit => `
+                <div class="visit-item">
+                    <div class="visit-date">📅 ${formatDate(visit.tanggal)}</div>
+                    <p><strong>Keluhan:</strong> ${visit.keluhan}</p>
+                    <p><strong>Diagnosa:</strong> ${visit.diagnosa}</p>
+                    <p><strong>Tindakan:</strong> ${visit.tindakan}</p>
+                </div>
+            `).join('');
+        }
+        
+        // Print to PDF
+        function printToPDF() {
+            window.print();
+        }
+        
+        // Load data
+        window.onload = loadPatientDetail;
+    </script>
+</body>
+</html>

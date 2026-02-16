@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Edit Pasien - Klinik UMKM</title>
+    <style>
+        /* CSS sama dengan form-pasien.html */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: background 0.3s;
+            text-decoration: none;
+            color: #667eea;
+        }
+        
+        .back-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        h1 {
+            font-size: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+        
+        .form-title {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .form-title h2 {
+            color: #333;
+            font-size: 24px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            padding: 10px 0;
+        }
+        
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        
+        .radio-label input[type="radio"] {
+            width: auto;
+            margin-right: 5px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+        
+        .btn-primary, .btn-secondary {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="list-pasien.html" class="back-btn">← Kembali</a>
+            <h1 id="clinicName">KLINIK UMKM</h1>
+            <div style="width: 40px;"></div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="form-card">
+            <div class="form-title">
+                <h2>✏️ Edit Data Pasien</h2>
+                <p>Ubah data pasien yang sudah terdaftar</p>
+            </div>
+            
+            <div id="alertMessage" class="alert"></div>
+            
+            <form id="patientForm" onsubmit="updatePatient(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nomor Rekam Medis</label>
+                        <input type="text" id="noRm" readonly style="background: #f5f5f5;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Tanggal Daftar</label>
+                        <input type="date" id="tanggalDaftar" required>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>Nama Lengkap</label>
+                        <input type="text" id="namaLengkap" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>NIK</label>
+                        <input type="text" id="nik" required maxlength="16">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>No. BPJS/KIS</label>
+                        <input type="text" id="bpjs">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Tempat Lahir</label>
+                        <input type="text" id="tempatLahir" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Tanggal Lahir</label>
+                        <input type="date" id="tanggalLahir" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Jenis Kelamin</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="jenisKelamin" value="Laki-laki"> Laki-laki
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="jenisKelamin" value="Perempuan"> Perempuan
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Golongan Darah</label>
+                        <select id="golDarah">
+                            <option value="">Pilih Golongan Darah</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="AB">AB</option>
+                            <option value="O">O</option>
+                            <option value="Tidak Tahu">Tidak Tahu</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>Alamat Lengkap</label>
+                        <textarea id="alamat" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Provinsi</label>
+                        <input type="text" id="provinsi">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Kota/Kabupaten</label>
+                        <input type="text" id="kota">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Kecamatan</label>
+                        <input type="text" id="kecamatan">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Kelurahan/Desa</label>
+                        <input type="text" id="kelurahan">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>No. Telepon/HP</label>
+                        <input type="tel" id="noTelp" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="email">
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>Pekerjaan</label>
+                        <input type="text" id="pekerjaan">
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>Alergi</label>
+                        <textarea id="alergi"></textarea>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>Catatan Medis Awal</label>
+                        <textarea id="catatanAwal"></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="window.location.href='list-pasien.html'">Batal</button>
+                    <button type="submit" class="btn-primary">Update Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        if (!sessionStorage.getItem('isLoggedIn')) {
+            window.location.href = 'index.html';
+        }
+        
+        document.getElementById('clinicName').textContent = localStorage.getItem('clinicName') || 'KLINIK UMKM';
+        
+        const patientNo = sessionStorage.getItem('editPatientNo');
+        if (!patientNo) {
+            window.location.href = 'list-pasien.html';
+        }
+        
+        // Load data pasien
+        function loadPatientData() {
+            const patients = JSON.parse(localStorage.getItem('patients') || '[]');
+            const patient = patients.find(p => p.noRm === patientNo);
+            
+            if (!patient) {
+                alert('Data pasien tidak ditemukan!');
+                window.location.href = 'list-pasien.html';
+                return;
+            }
+            
+            // Isi form
+            document.getElementById('noRm').value = patient.noRm;
+            document.getElementById('tanggalDaftar').value = patient.tanggalDaftar;
+            document.getElementById('namaLengkap').value = patient.namaLengkap;
+            document.getElementById('nik').value = patient.nik || '';
+            document.getElementById('bpjs').value = patient.bpjs || '';
+            document.getElementById('tempatLahir').value = patient.tempatLahir || '';
+            document.getElementById('tanggalLahir').value = patient.tanggalLahir;
+            
+            // Radio button
+            if (patient.jenisKelamin === 'Laki-laki') {
+                document.querySelector('input[name="jenisKelamin"][value="Laki-laki"]').checked = true;
+            } else {
+                document.querySelector('input[name="jenisKelamin"][value="Perempuan"]').checked = true;
+            }
+            
+            document.getElementById('golDarah').value = patient.golDarah || '';
+            document.getElementById('alamat').value = patient.alamat || '';
+            document.getElementById('provinsi').value = patient.provinsi || '';
+            document.getElementById('kota').value = patient.kota || '';
+            document.getElementById('kecamatan').value = patient.kecamatan || '';
+            document.getElementById('kelurahan').value = patient.kelurahan || '';
+            document.getElementById('noTelp').value = patient.noTelp || '';
+            document.getElementById('email').value = patient.email || '';
+            document.getElementById('pekerjaan').value = patient.pekerjaan || '';
+            document.getElementById('alergi').value = patient.alergi || '';
+            document.getElementById('catatanAwal').value = patient.catatanAwal || '';
+        }
+        
+        // Update patient
+        function updatePatient(event) {
+            event.preventDefault();
+            
+            const patients = JSON.parse(localStorage.getItem('patients') || '[]');
+            const index = patients.findIndex(p => p.noRm === patientNo);
+            
+            if (index === -1) {
+                showAlert('Data pasien tidak ditemukan!', 'error');
+                return;
+            }
+            
+            // Update data
+            patients[index] = {
+                ...patients[index],
+                tanggalDaftar: document.getElementById('tanggalDaftar').value,
+                namaLengkap: document.getElementById('namaLengkap').value,
+                nik: document.getElementById('nik').value,
+                bpjs: document.getElementById('bpjs').value,
+                tempatLahir: document.getElementById('tempatLahir').value,
+                tanggalLahir: document.getElementById('tanggalLahir').value,
+                jenisKelamin: document.querySelector('input[name="jenisKelamin"]:checked').value,
+                golDarah: document.getElementById('golDarah').value,
+                alamat: document.getElementById('alamat').value,
+                provinsi: document.getElementById('provinsi').value,
+                kota: document.getElementById('kota').value,
+                kecamatan: document.getElementById('kecamatan').value,
+                kelurahan: document.getElementById('kelurahan').value,
+                noTelp: document.getElementById('noTelp').value,
+                email: document.getElementById('email').value,
+                pekerjaan: document.getElementById('pekerjaan').value,
+                alergi: document.getElementById('alergi').value,
+                catatanAwal: document.getElementById('catatanAwal').value,
+                updatedAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem('patients', JSON.stringify(patients));
+            showAlert('Data pasien berhasil diupdate!', 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'list-pasien.html';
+            }, 1500);
+        }
+        
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alertMessage');
+            alertDiv.textContent = message;
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        window.onload = loadPatientData;
+    </script>
+</body>
+</html>

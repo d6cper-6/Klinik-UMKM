@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Logout - Klinik UMKM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .logout-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 500px;
+            padding: 40px 30px;
+            animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .btn-export {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .btn-export.json {
+            background: #2196F3;
+        }
+        
+        .btn-export.csv {
+            background: #FF9800;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn-logout, .btn-cancel {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-logout {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-logout:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        
+        .btn-logout:disabled {
+            background: #e0e0e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-cancel:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+        
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .checkbox input {
+            width: auto;
+        }
+        
+        @media (max-width: 480px) {
+            .btn-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="logout-container">
+        <h2>🚪 Logout</h2>
+        <p class="subtitle">Pastikan data sudah dibackup sebelum keluar</p>
+        
+        <div class="warning">
+            ⚠️ Data tersimpan di browser ini. Backup jika ingin memindahkan ke perangkat lain.
+        </div>
+        
+        <!-- Backup Section -->
+        <div class="section">
+            <div class="section-title">📥 Backup Data Sebelum Logout</div>
+            
+            <div class="btn-group">
+                <button class="btn-export json" onclick="exportJSON()">
+                    💾 Backup JSON
+                </button>
+                <button class="btn-export csv" onclick="exportCSV()">
+                    📊 Backup CSV
+                </button>
+            </div>
+            
+            <div class="checkbox">
+                <input type="checkbox" id="alreadyBackup" onchange="toggleLogoutButton()">
+                <label for="alreadyBackup">Saya sudah melakukan backup data</label>
+            </div>
+        </div>
+        
+        <!-- Password Section -->
+        <div class="section">
+            <div class="section-title">🔐 Konfirmasi Logout</div>
+            
+            <div class="form-group">
+                <label>Masukkan Password</label>
+                <input type="password" id="password" placeholder="Masukkan password admin" onkeyup="toggleLogoutButton()">
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="dashboard.html" class="btn-cancel">Batal</a>
+            <button class="btn-logout" id="logoutBtn" onclick="handleLogout()" disabled>
+                Logout
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // Cek login
+        if (!sessionStorage.getItem('isLoggedIn')) {
+            window.location.href = 'index.html';
+        }
+        
+        // Toggle logout button
+        function toggleLogoutButton() {
+            const isBackup = document.getElementById('alreadyBackup').checked;
+            const password = document.getElementById('password').value;
+            const logoutBtn = document.getElementById('logoutBtn');
+            
+            if (isBackup && password === 'adminklinik123') {
+                logoutBtn.disabled = false;
+            } else {
+                logoutBtn.disabled = true;
+            }
+        }
+        
+        // Export JSON
+        function exportJSON() {
+            const patients = JSON.parse(localStorage.getItem('patients') || '[]');
+            const dataStr = JSON.stringify(patients, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `backup_logout_${new Date().toISOString().slice(0,10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            alert('Backup JSON berhasil! Jangan lupa centang "Saya sudah melakukan backup data"');
+        }
+        
+        // Export CSV
+        function exportCSV() {
+            const patients = JSON.parse(localStorage.getItem('patients') || '[]');
+            
+            if (patients.length === 0) {
+                alert('Tidak ada data untuk dibackup!');
+                return;
+            }
+            
+            // Header CSV
+            const headers = ['No RM','Nama Lengkap','NIK','BPJS','Tempat Lahir','Tanggal Lahir','Jenis Kelamin','No Telp','Alamat'];
+            
+            // Data
+            const rows = patients.map(p => [
+                p.noRm,
+                p.namaLengkap,
+                p.nik || '',
+                p.bpjs || '',
+                p.tempatLahir || '',
+                p.tanggalLahir || '',
+                p.jenisKelamin,
+                p.noTelp,
+                p.alamat.replace(/,/g, ';')
+            ]);
+            
+            // Gabungkan
+            const csvContent = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+            ].join('\n');
+            
+            // Download
+            const dataUri = 'data:text/csv;charset=utf-8,'+ encodeURIComponent(csvContent);
+            const exportFileDefaultName = `backup_logout_${new Date().toISOString().slice(0,10)}.csv`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            alert('Backup CSV berhasil! Jangan lupa centang "Saya sudah melakukan backup data"');
+        }
+        
+        // Handle logout
+        function handleLogout() {
+            // Hapus session
+            sessionStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('username');
+            
+            // Redirect ke login
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
