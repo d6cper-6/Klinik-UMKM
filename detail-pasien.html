@@ -207,9 +207,62 @@
             margin-bottom: 10px;
         }
         
+        /* Log Container */
+        .log-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .log-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .btn-download-log {
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .btn-download-log:hover {
+            background: #45a049;
+        }
+        
+        .log-entries {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 12px;
+            background: #f8f9fa;
+        }
+        
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px dashed #e0e0e0;
+            color: #666;
+            font-family: monospace;
+        }
+        
         /* Print styles */
         @media print {
-            .navbar, .action-bar, .back-btn, .btn-print, .btn-pdf, .btn-back {
+            .navbar, .action-bar, .back-btn, .btn-print, .btn-pdf, .btn-back, .log-container {
                 display: none;
             }
             
@@ -257,7 +310,7 @@
     <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="list-pasien.html" class="back-btn">← Kembali</a>
+            <a href="list-pasien.html" class="back-btn" onclick="logBackToList()">← Kembali</a>
             <h1 id="clinicName">KLINIK UMKM</h1>
             <div style="width: 40px;"></div>
         </div>
@@ -267,13 +320,13 @@
     <div class="container">
         <!-- Action Buttons -->
         <div class="action-bar">
-            <button class="btn-print" onclick="window.print()">
+            <button class="btn-print" onclick="printToPrinter()">
                 🖨️ Print ke Printer
             </button>
             <button class="btn-pdf" onclick="printToPDF()">
                 📄 Simpan sebagai PDF
             </button>
-            <a href="list-pasien.html" class="btn-back">
+            <a href="list-pasien.html" class="btn-back" onclick="logBackToList()">
                 ⬅️ Kembali ke Daftar
             </a>
         </div>
@@ -356,9 +409,87 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Detail Log Viewer -->
+        <div class="log-container">
+            <div class="log-header">
+                <span class="log-title">📋 Detail Activity Log</span>
+                <button class="btn-download-log" onclick="downloadLog()">⬇️ Download Log</button>
+            </div>
+            <div id="detailLogs" class="log-entries"></div>
+        </div>
     </div>
     
     <script>
+        // ==================== LOGGING SYSTEM ====================
+        const LOG_FILE = 'detail-pasien.log.txt';
+        
+        function writeLog(message, type = 'INFO') {
+            const timestamp = new Date().toLocaleString('id-ID', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const user = sessionStorage.getItem('username') || 'unknown';
+            const patientId = document.getElementById('noRM')?.textContent || 'unknown';
+            const logEntry = `[${timestamp}] [${type}] [User: ${user}] [Patient: ${patientId}] ${message}`;
+            
+            // Simpan ke localStorage
+            const logs = JSON.parse(localStorage.getItem('detail_pasien_logs') || '[]');
+            logs.push(logEntry);
+            
+            if (logs.length > 100) {
+                logs.shift();
+            }
+            
+            localStorage.setItem('detail_pasien_logs', JSON.stringify(logs));
+            
+            // Tampilkan
+            displayLogs();
+            
+            // Simpan ke file
+            let existingLogs = localStorage.getItem('detail_pasien_logs_file') || '';
+            existingLogs += logEntry + '\n';
+            localStorage.setItem('detail_pasien_logs_file', existingLogs);
+        }
+        
+        function displayLogs() {
+            const logs = JSON.parse(localStorage.getItem('detail_pasien_logs') || '[]');
+            const container = document.getElementById('detailLogs');
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="log-entry">Belum ada aktivitas</div>';
+                return;
+            }
+            
+            container.innerHTML = logs.reverse().map(log => 
+                `<div class="log-entry">${log}</div>`
+            ).join('');
+        }
+        
+        function downloadLog() {
+            const logs = localStorage.getItem('detail_pasien_logs_file') || '=== LOG FILE: detail-pasien.log.txt ===\n\n';
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = LOG_FILE;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            writeLog('Detail log file downloaded', 'INFO');
+        }
+        
+        function logBackToList() {
+            writeLog('Back to list clicked', 'NAVIGATION');
+        }
+        
+        // ==================== DETAIL FUNCTIONS ====================
+        
         // Cek login
         if (!sessionStorage.getItem('isLoggedIn')) {
             window.location.href = 'index.html';
@@ -373,14 +504,19 @@
         
         // Load data pasien
         function loadPatientDetail() {
+            writeLog(`Loading patient detail for ID: ${patientId}`, 'INFO');
+            
             const patients = JSON.parse(localStorage.getItem('patients') || '[]');
             const patient = patients.find(p => p.noRm === patientId);
             
             if (!patient) {
+                writeLog(`Patient not found: ${patientId}`, 'ERROR');
                 alert('Data pasien tidak ditemukan!');
                 window.location.href = 'list-pasien.html';
                 return;
             }
+            
+            writeLog(`Patient loaded: ${patient.noRm} - ${patient.namaLengkap}`, 'SUCCESS');
             
             // Isi data
             document.getElementById('namaPasien').textContent = patient.namaLengkap;
@@ -409,7 +545,7 @@
             document.getElementById('alergi').textContent = patient.alergi || 'Tidak ada alergi';
             document.getElementById('catatanAwal').textContent = patient.catatanAwal || 'Tidak ada catatan';
             
-            // Riwayat kunjungan (contoh)
+            // Riwayat kunjungan
             loadVisitHistory(patient.noRm);
         }
         
@@ -424,7 +560,7 @@
             });
         }
         
-        // Load riwayat kunjungan (sementara contoh)
+        // Load riwayat kunjungan
         function loadVisitHistory(noRm) {
             const visits = JSON.parse(localStorage.getItem(`visits_${noRm}`) || '[]');
             const container = document.getElementById('riwayatKunjungan');
@@ -444,13 +580,23 @@
             `).join('');
         }
         
-        // Print to PDF
+        // Print functions
+        function printToPrinter() {
+            writeLog('Print to printer initiated', 'PRINT');
+            window.print();
+        }
+        
         function printToPDF() {
+            writeLog('Print to PDF initiated', 'PRINT');
             window.print();
         }
         
         // Load data
-        window.onload = loadPatientDetail;
+        window.onload = function() {
+            writeLog('Detail page accessed', 'INFO');
+            loadPatientDetail();
+            displayLogs();
+        };
     </script>
 </body>
 </html>

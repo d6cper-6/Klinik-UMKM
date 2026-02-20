@@ -212,6 +212,59 @@
             border: 1px solid #f5c6cb;
         }
         
+        /* Log Container */
+        .log-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .log-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .btn-download-log {
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .btn-download-log:hover {
+            background: #45a049;
+        }
+        
+        .log-entries {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 12px;
+            background: #f8f9fa;
+        }
+        
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px dashed #e0e0e0;
+            color: #666;
+            font-family: monospace;
+        }
+        
         /* Responsive */
         @media (max-width: 640px) {
             .form-grid {
@@ -236,7 +289,7 @@
     <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="dashboard.html" class="back-btn">← Kembali</a>
+            <a href="dashboard.html" class="back-btn" onclick="logBackToDashboard()">← Kembali</a>
             <h1 id="clinicName">KLINIK UMKM</h1>
             <div style="width: 40px;"></div>
         </div>
@@ -256,7 +309,7 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Nomor Rekam Medis <span class="required">*</span></label>
-                        <input type="text" id="noRm" placeholder="Contoh: RM-2024001" required>
+                        <input type="text" id="noRm" placeholder="Contoh: RM-2024001" required readonly>
                     </div>
                     
                     <div class="form-group">
@@ -365,14 +418,91 @@
                 </div>
                 
                 <div class="form-actions">
-                    <button type="button" class="btn-secondary" onclick="window.location.href='dashboard.html'">Batal</button>
+                    <button type="button" class="btn-secondary" onclick="cancelForm()">Batal</button>
                     <button type="submit" class="btn-primary">Simpan Data Pasien</button>
                 </div>
             </form>
         </div>
+        
+        <!-- Form Log Viewer -->
+        <div class="log-container">
+            <div class="log-header">
+                <span class="log-title">📋 Form Activity Log</span>
+                <button class="btn-download-log" onclick="downloadLog()">⬇️ Download Log</button>
+            </div>
+            <div id="formLogs" class="log-entries"></div>
+        </div>
     </div>
     
     <script>
+        // ==================== LOGGING SYSTEM ====================
+        const LOG_FILE = 'form-pasien.log.txt';
+        
+        function writeLog(message, type = 'INFO') {
+            const timestamp = new Date().toLocaleString('id-ID', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const user = sessionStorage.getItem('username') || 'unknown';
+            const logEntry = `[${timestamp}] [${type}] [User: ${user}] ${message}`;
+            
+            // Simpan ke localStorage
+            const logs = JSON.parse(localStorage.getItem('form_pasien_logs') || '[]');
+            logs.push(logEntry);
+            
+            if (logs.length > 100) {
+                logs.shift();
+            }
+            
+            localStorage.setItem('form_pasien_logs', JSON.stringify(logs));
+            
+            // Tampilkan
+            displayLogs();
+            
+            // Simpan ke file
+            let existingLogs = localStorage.getItem('form_pasien_logs_file') || '';
+            existingLogs += logEntry + '\n';
+            localStorage.setItem('form_pasien_logs_file', existingLogs);
+        }
+        
+        function displayLogs() {
+            const logs = JSON.parse(localStorage.getItem('form_pasien_logs') || '[]');
+            const container = document.getElementById('formLogs');
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="log-entry">Belum ada aktivitas form</div>';
+                return;
+            }
+            
+            container.innerHTML = logs.reverse().map(log => 
+                `<div class="log-entry">${log}</div>`
+            ).join('');
+        }
+        
+        function downloadLog() {
+            const logs = localStorage.getItem('form_pasien_logs_file') || '=== LOG FILE: form-pasien.log.txt ===\n\n';
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = LOG_FILE;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            writeLog('Form log file downloaded', 'INFO');
+        }
+        
+        function logBackToDashboard() {
+            writeLog('Back to dashboard clicked', 'NAVIGATION');
+        }
+        
+        // ==================== FORM FUNCTIONS ====================
+        
         // Cek login
         if (!sessionStorage.getItem('isLoggedIn')) {
             window.location.href = 'index.html';
@@ -394,15 +524,18 @@
         
         // Set nomor RM otomatis
         document.getElementById('noRm').value = generateNoRM();
-        document.getElementById('noRm').readOnly = true;
+        writeLog(`Generated new RM number: ${document.getElementById('noRm').value}`, 'INFO');
         
         // Save patient
         function savePatient(event) {
             event.preventDefault();
             
+            writeLog('Attempting to save new patient', 'ACTION');
+            
             // Validasi NIK
             const nik = document.getElementById('nik').value;
             if (nik && nik.length !== 16) {
+                writeLog(`Validation failed: NIK length ${nik.length} (should be 16)`, 'VALIDATION_FAILED');
                 showAlert('NIK harus 16 digit!', 'error');
                 return;
             }
@@ -437,6 +570,8 @@
             patients.push(patientData);
             localStorage.setItem('patients', JSON.stringify(patients));
             
+            writeLog(`Patient saved successfully: ${patientData.noRm} - ${patientData.namaLengkap}`, 'SUCCESS');
+            
             // Tampilkan alert sukses
             showAlert('Data pasien berhasil disimpan!', 'success');
             
@@ -445,7 +580,13 @@
                 document.getElementById('patientForm').reset();
                 document.getElementById('tanggalDaftar').valueAsDate = new Date();
                 document.getElementById('noRm').value = generateNoRM();
+                writeLog(`Form reset, new RM: ${document.getElementById('noRm').value}`, 'INFO');
             }, 2000);
+        }
+        
+        function cancelForm() {
+            writeLog('Form cancelled by user', 'ACTION');
+            window.location.href = 'dashboard.html';
         }
         
         function showAlert(message, type) {
@@ -458,6 +599,12 @@
                 alertDiv.style.display = 'none';
             }, 3000);
         }
+        
+        // Load logs saat halaman dimuat
+        window.onload = function() {
+            writeLog('Form page accessed', 'INFO');
+            displayLogs();
+        };
     </script>
 </body>
 </html>

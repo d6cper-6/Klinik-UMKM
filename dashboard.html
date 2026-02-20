@@ -260,6 +260,59 @@
             background: #d0d0d0;
         }
         
+        /* Log Container */
+        .log-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .log-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .btn-download-log {
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .btn-download-log:hover {
+            background: #45a049;
+        }
+        
+        .log-entries {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 12px;
+            background: #f8f9fa;
+        }
+        
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px dashed #e0e0e0;
+            color: #666;
+            font-family: monospace;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .header-title h1 {
@@ -303,13 +356,13 @@
         </div>
         
         <div class="menu-grid">
-            <div class="menu-card" onclick="window.location.href='form-pasien.html'">
+            <div class="menu-card" onclick="navigateTo('form-pasien.html', 'Pasien Baru')">
                 <div class="menu-icon">➕</div>
                 <h3>Pasien Baru</h3>
                 <p>Tambah data pasien baru</p>
             </div>
             
-            <div class="menu-card" onclick="window.location.href='list-pasien.html'">
+            <div class="menu-card" onclick="navigateTo('list-pasien.html', 'Daftar List Pasien')">
                 <div class="menu-icon">📋</div>
                 <h3>Daftar List Pasien</h3>
                 <p>Lihat dan cari data pasien</p>
@@ -327,6 +380,15 @@
                 <p>Konfigurasi aplikasi</p>
             </div>
         </div>
+        
+        <!-- Dashboard Log Viewer -->
+        <div class="log-container">
+            <div class="log-header">
+                <span class="log-title">📋 Dashboard Activity Log</span>
+                <button class="btn-download-log" onclick="downloadLog()">⬇️ Download Log</button>
+            </div>
+            <div id="dashboardLogs" class="log-entries"></div>
+        </div>
     </div>
     
     <!-- Modal Edit Judul -->
@@ -343,6 +405,70 @@
     </div>
     
     <script>
+        // ==================== LOGGING SYSTEM ====================
+        const LOG_FILE = 'dashboard.log.txt';
+        
+        function writeLog(message, type = 'INFO') {
+            const timestamp = new Date().toLocaleString('id-ID', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const user = sessionStorage.getItem('username') || 'unknown';
+            const logEntry = `[${timestamp}] [${type}] [User: ${user}] ${message}`;
+            
+            // Simpan ke localStorage
+            const logs = JSON.parse(localStorage.getItem('dashboard_logs') || '[]');
+            logs.push(logEntry);
+            
+            if (logs.length > 100) {
+                logs.shift();
+            }
+            
+            localStorage.setItem('dashboard_logs', JSON.stringify(logs));
+            
+            // Tampilkan
+            displayLogs();
+            
+            // Simpan ke file
+            let existingLogs = localStorage.getItem('dashboard_logs_file') || '';
+            existingLogs += logEntry + '\n';
+            localStorage.setItem('dashboard_logs_file', existingLogs);
+        }
+        
+        function displayLogs() {
+            const logs = JSON.parse(localStorage.getItem('dashboard_logs') || '[]');
+            const container = document.getElementById('dashboardLogs');
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="log-entry">Belum ada aktivitas</div>';
+                return;
+            }
+            
+            container.innerHTML = logs.reverse().map(log => 
+                `<div class="log-entry">${log}</div>`
+            ).join('');
+        }
+        
+        function downloadLog() {
+            const logs = localStorage.getItem('dashboard_logs_file') || '=== LOG FILE: dashboard.log.txt ===\n\n';
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = LOG_FILE;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            writeLog('Dashboard log file downloaded', 'INFO');
+        }
+        
+        // ==================== DASHBOARD FUNCTIONS ====================
+        
         // Cek login
         if (!sessionStorage.getItem('isLoggedIn')) {
             window.location.href = 'index.html';
@@ -350,6 +476,8 @@
         
         // Load nama klinik dari localStorage
         window.onload = function() {
+            writeLog('Dashboard accessed', 'INFO');
+            
             const savedName = localStorage.getItem('clinicName');
             if (savedName) {
                 document.getElementById('clinicName').textContent = savedName;
@@ -359,10 +487,19 @@
             // Set username di welcome message
             const username = sessionStorage.getItem('username') || 'Admin';
             document.getElementById('welcomeMessage').textContent = `Selamat Datang, ${username}`;
+            
+            displayLogs();
         };
+        
+        // Navigasi dengan log
+        function navigateTo(page, menuName) {
+            writeLog(`Navigating to ${menuName} (${page})`, 'NAVIGATION');
+            window.location.href = page;
+        }
         
         // Modal functions
         function showEditModal() {
+            writeLog('Edit clinic name modal opened', 'ACTION');
             document.getElementById('editModal').style.display = 'flex';
             document.getElementById('newClinicName').value = document.getElementById('clinicName').textContent;
         }
@@ -375,26 +512,33 @@
             const newName = document.getElementById('newClinicName').value;
             const password = document.getElementById('editPassword').value;
             
+            writeLog('Attempting to edit clinic name', 'ACTION');
+            
             if (password === 'qwerty') {
                 localStorage.setItem('clinicName', newName);
                 document.getElementById('clinicName').textContent = newName;
                 closeModal();
+                writeLog(`Clinic name changed to: ${newName}`, 'SUCCESS');
                 alert('Nama klinik berhasil diubah!');
             } else {
+                writeLog('Failed to edit clinic name: Wrong password', 'FAILED');
                 alert('Password salah!');
             }
         }
         
         // Handle menu
         function handleImport() {
+            writeLog('Navigating to Import/Restore page', 'NAVIGATION');
             window.location.href = 'import.html';
         }
         
         function handleLogout() {
+            writeLog('Navigating to Logout page', 'NAVIGATION');
             window.location.href = 'logout.html';
         }
         
         function showComingSoon() {
+            writeLog('Accessed Coming Soon feature', 'INFO');
             alert('Fitur akan segera tersedia!');
         }
         

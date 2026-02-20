@@ -197,6 +197,59 @@
             border: 1px solid #f5c6cb;
         }
         
+        /* Log Container */
+        .log-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .log-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .btn-download-log {
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .btn-download-log:hover {
+            background: #45a049;
+        }
+        
+        .log-entries {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 12px;
+            background: #f8f9fa;
+        }
+        
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px dashed #e0e0e0;
+            color: #666;
+            font-family: monospace;
+        }
+        
         @media (max-width: 640px) {
             .form-grid {
                 grid-template-columns: 1fr;
@@ -215,7 +268,7 @@
 <body>
     <nav class="navbar">
         <div class="nav-container">
-            <a href="list-pasien.html" class="back-btn">← Kembali</a>
+            <a href="list-pasien.html" class="back-btn" onclick="logBackToList()">← Kembali</a>
             <h1 id="clinicName">KLINIK UMKM</h1>
             <div style="width: 40px;"></div>
         </div>
@@ -343,14 +396,92 @@
                 </div>
                 
                 <div class="form-actions">
-                    <button type="button" class="btn-secondary" onclick="window.location.href='list-pasien.html'">Batal</button>
+                    <button type="button" class="btn-secondary" onclick="cancelEdit()">Batal</button>
                     <button type="submit" class="btn-primary">Update Data</button>
                 </div>
             </form>
         </div>
+        
+        <!-- Edit Log Viewer -->
+        <div class="log-container">
+            <div class="log-header">
+                <span class="log-title">📋 Edit Activity Log</span>
+                <button class="btn-download-log" onclick="downloadLog()">⬇️ Download Log</button>
+            </div>
+            <div id="editLogs" class="log-entries"></div>
+        </div>
     </div>
     
     <script>
+        // ==================== LOGGING SYSTEM ====================
+        const LOG_FILE = 'form-pasien-edit.log.txt';
+        
+        function writeLog(message, type = 'INFO') {
+            const timestamp = new Date().toLocaleString('id-ID', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const user = sessionStorage.getItem('username') || 'unknown';
+            const patientId = document.getElementById('noRm')?.value || 'unknown';
+            const logEntry = `[${timestamp}] [${type}] [User: ${user}] [Patient: ${patientId}] ${message}`;
+            
+            // Simpan ke localStorage
+            const logs = JSON.parse(localStorage.getItem('edit_pasien_logs') || '[]');
+            logs.push(logEntry);
+            
+            if (logs.length > 100) {
+                logs.shift();
+            }
+            
+            localStorage.setItem('edit_pasien_logs', JSON.stringify(logs));
+            
+            // Tampilkan
+            displayLogs();
+            
+            // Simpan ke file
+            let existingLogs = localStorage.getItem('edit_pasien_logs_file') || '';
+            existingLogs += logEntry + '\n';
+            localStorage.setItem('edit_pasien_logs_file', existingLogs);
+        }
+        
+        function displayLogs() {
+            const logs = JSON.parse(localStorage.getItem('edit_pasien_logs') || '[]');
+            const container = document.getElementById('editLogs');
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="log-entry">Belum ada aktivitas edit</div>';
+                return;
+            }
+            
+            container.innerHTML = logs.reverse().map(log => 
+                `<div class="log-entry">${log}</div>`
+            ).join('');
+        }
+        
+        function downloadLog() {
+            const logs = localStorage.getItem('edit_pasien_logs_file') || '=== LOG FILE: form-pasien-edit.log.txt ===\n\n';
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = LOG_FILE;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            writeLog('Edit log file downloaded', 'INFO');
+        }
+        
+        function logBackToList() {
+            writeLog('Back to list clicked', 'NAVIGATION');
+        }
+        
+        // ==================== EDIT FUNCTIONS ====================
+        
         if (!sessionStorage.getItem('isLoggedIn')) {
             window.location.href = 'index.html';
         }
@@ -359,19 +490,25 @@
         
         const patientNo = sessionStorage.getItem('editPatientNo');
         if (!patientNo) {
+            writeLog('No patient selected for editing', 'ERROR');
             window.location.href = 'list-pasien.html';
         }
         
         // Load data pasien
         function loadPatientData() {
+            writeLog(`Loading patient data for editing: ${patientNo}`, 'INFO');
+            
             const patients = JSON.parse(localStorage.getItem('patients') || '[]');
             const patient = patients.find(p => p.noRm === patientNo);
             
             if (!patient) {
+                writeLog(`Patient not found: ${patientNo}`, 'ERROR');
                 alert('Data pasien tidak ditemukan!');
                 window.location.href = 'list-pasien.html';
                 return;
             }
+            
+            writeLog(`Patient loaded: ${patient.noRm} - ${patient.namaLengkap}`, 'SUCCESS');
             
             // Isi form
             document.getElementById('noRm').value = patient.noRm;
@@ -406,13 +543,19 @@
         function updatePatient(event) {
             event.preventDefault();
             
+            writeLog('Attempting to update patient data', 'ACTION');
+            
             const patients = JSON.parse(localStorage.getItem('patients') || '[]');
             const index = patients.findIndex(p => p.noRm === patientNo);
             
             if (index === -1) {
+                writeLog('Update failed: Patient not found', 'ERROR');
                 showAlert('Data pasien tidak ditemukan!', 'error');
                 return;
             }
+            
+            // Simpan data lama untuk log
+            const oldData = { ...patients[index] };
             
             // Update data
             patients[index] = {
@@ -439,11 +582,18 @@
             };
             
             localStorage.setItem('patients', JSON.stringify(patients));
+            
+            writeLog(`Patient updated successfully: ${patientNo}`, 'UPDATE_SUCCESS');
             showAlert('Data pasien berhasil diupdate!', 'success');
             
             setTimeout(() => {
                 window.location.href = 'list-pasien.html';
             }, 1500);
+        }
+        
+        function cancelEdit() {
+            writeLog('Edit cancelled by user', 'CANCELLED');
+            window.location.href = 'list-pasien.html';
         }
         
         function showAlert(message, type) {
@@ -457,7 +607,11 @@
             }, 3000);
         }
         
-        window.onload = loadPatientData;
+        window.onload = function() {
+            writeLog('Edit page accessed', 'INFO');
+            loadPatientData();
+            displayLogs();
+        };
     </script>
 </body>
 </html>
