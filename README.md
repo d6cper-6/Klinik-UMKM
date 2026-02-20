@@ -1,4 +1,4 @@
-Saya akan update file `README.md` dengan menambahkan dokumentasi lengkap tentang **Sistem Logging** yang baru saja kita buat:
+Saya akan update file `README.md` dengan menambahkan dokumentasi lengkap tentang **Sistem Logging**:
 
 # 📁 **File: `README.md` (Updated)**
 
