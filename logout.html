@@ -193,6 +193,43 @@
             width: auto;
         }
         
+        /* Log Container */
+        .log-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .log-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px dashed #e0e0e0;
+            color: #666;
+            font-family: monospace;
+        }
+        
+        .btn-download-log {
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
         @media (max-width: 480px) {
             .btn-group {
                 grid-template-columns: 1fr;
@@ -244,14 +281,85 @@
         
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <a href="dashboard.html" class="btn-cancel">Batal</a>
+            <a href="dashboard.html" class="btn-cancel" onclick="logCancel()">Batal</a>
             <button class="btn-logout" id="logoutBtn" onclick="handleLogout()" disabled>
                 Logout
             </button>
         </div>
+        
+        <!-- Log Viewer -->
+        <div class="log-container">
+            <div class="log-title">📋 Logout Activity Log</div>
+            <div id="logoutLogs" class="log-entries"></div>
+            <button class="btn-download-log" onclick="downloadLog()">⬇️ Download Log File</button>
+        </div>
     </div>
     
     <script>
+        // ==================== LOGGING SYSTEM ====================
+        const LOG_FILE = 'logout.log.txt';
+        
+        function writeLog(message, type = 'INFO') {
+            const timestamp = new Date().toLocaleString('id-ID', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const user = sessionStorage.getItem('username') || 'unknown';
+            const logEntry = `[${timestamp}] [${type}] [User: ${user}] ${message}`;
+            
+            // Simpan ke localStorage
+            const logs = JSON.parse(localStorage.getItem('logout_logs') || '[]');
+            logs.push(logEntry);
+            
+            if (logs.length > 50) {
+                logs.shift();
+            }
+            
+            localStorage.setItem('logout_logs', JSON.stringify(logs));
+            
+            // Tampilkan
+            displayLogs();
+            
+            // Simpan ke file
+            let existingLogs = localStorage.getItem('logout_logs_file') || '';
+            existingLogs += logEntry + '\n';
+            localStorage.setItem('logout_logs_file', existingLogs);
+        }
+        
+        function displayLogs() {
+            const logs = JSON.parse(localStorage.getItem('logout_logs') || '[]');
+            const container = document.getElementById('logoutLogs');
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="log-entry">Belum ada aktivitas logout</div>';
+                return;
+            }
+            
+            container.innerHTML = logs.reverse().map(log => 
+                `<div class="log-entry">${log}</div>`
+            ).join('');
+        }
+        
+        function downloadLog() {
+            const logs = localStorage.getItem('logout_logs_file') || '=== LOG FILE: logout.log.txt ===\n\n';
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = LOG_FILE;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            writeLog('Logout log file downloaded', 'INFO');
+        }
+        
+        // ==================== LOGOUT FUNCTIONS ====================
+        
         // Cek login
         if (!sessionStorage.getItem('isLoggedIn')) {
             window.location.href = 'index.html';
@@ -272,6 +380,8 @@
         
         // Export JSON
         function exportJSON() {
+            writeLog('Export JSON initiated from logout page', 'EXPORT');
+            
             const patients = JSON.parse(localStorage.getItem('patients') || '[]');
             const dataStr = JSON.stringify(patients, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
@@ -283,14 +393,18 @@
             linkElement.setAttribute('download', exportFileDefaultName);
             linkElement.click();
             
+            writeLog(`JSON backup completed: ${patients.length} patients`, 'EXPORT_SUCCESS');
             alert('Backup JSON berhasil! Jangan lupa centang "Saya sudah melakukan backup data"');
         }
         
         // Export CSV
         function exportCSV() {
+            writeLog('Export CSV initiated from logout page', 'EXPORT');
+            
             const patients = JSON.parse(localStorage.getItem('patients') || '[]');
             
             if (patients.length === 0) {
+                writeLog('CSV backup failed: No data', 'EXPORT_FAILED');
                 alert('Tidak ada data untuk dibackup!');
                 return;
             }
@@ -326,18 +440,34 @@
             linkElement.setAttribute('download', exportFileDefaultName);
             linkElement.click();
             
+            writeLog(`CSV backup completed: ${patients.length} patients`, 'EXPORT_SUCCESS');
             alert('Backup CSV berhasil! Jangan lupa centang "Saya sudah melakukan backup data"');
         }
         
         // Handle logout
         function handleLogout() {
+            writeLog('Logout initiated', 'LOGOUT');
+            
             // Hapus session
             sessionStorage.removeItem('isLoggedIn');
             sessionStorage.removeItem('username');
             
+            writeLog('Logout successful, redirecting to login page', 'LOGOUT_SUCCESS');
+            
             // Redirect ke login
             window.location.href = 'index.html';
         }
+        
+        // Log cancel
+        function logCancel() {
+            writeLog('Logout cancelled, returning to dashboard', 'CANCELLED');
+        }
+        
+        // Load logs saat halaman dimuat
+        window.onload = function() {
+            writeLog('Logout page accessed', 'INFO');
+            displayLogs();
+        };
     </script>
 </body>
 </html>

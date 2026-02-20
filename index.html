@@ -140,6 +140,29 @@
             font-size: 12px;
         }
         
+        .log-container {
+            margin-top: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .log-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px dashed #e0e0e0;
+            color: #666;
+        }
+        
         @media (max-width: 480px) {
             .login-container {
                 padding: 30px 20px;
@@ -178,9 +201,83 @@
         <div class="info">
             <p>Demo: admin_klinik / adminklinik123</p>
         </div>
+        
+        <!-- Log Viewer -->
+        <div class="log-container">
+            <div class="log-title">📋 Login Activity Log</div>
+            <div id="logEntries" class="log-entries"></div>
+        </div>
     </div>
 
     <script>
+        // ==================== LOGGING SYSTEM ====================
+        const LOG_FILE = 'login.log.txt';
+        
+        function writeLog(message, type = 'INFO') {
+            const timestamp = new Date().toLocaleString('id-ID', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const logEntry = `[${timestamp}] [${type}] ${message}`;
+            
+            // Simpan ke localStorage sebagai log sementara
+            const logs = JSON.parse(localStorage.getItem('login_logs') || '[]');
+            logs.push(logEntry);
+            
+            // Batasi hanya 50 log terakhir
+            if (logs.length > 50) {
+                logs.shift();
+            }
+            
+            localStorage.setItem('login_logs', JSON.stringify(logs));
+            
+            // Tampilkan di halaman
+            displayLogs();
+            
+            // Simpan ke file (via download)
+            saveLogToFile(logEntry);
+        }
+        
+        function saveLogToFile(logEntry) {
+            // Ambil log yang sudah ada
+            let existingLogs = localStorage.getItem('login_logs_file') || '';
+            existingLogs += logEntry + '\n';
+            localStorage.setItem('login_logs_file', existingLogs);
+        }
+        
+        function displayLogs() {
+            const logs = JSON.parse(localStorage.getItem('login_logs') || '[]');
+            const container = document.getElementById('logEntries');
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="log-entry">Belum ada aktivitas login</div>';
+                return;
+            }
+            
+            container.innerHTML = logs.reverse().map(log => 
+                `<div class="log-entry">${log}</div>`
+            ).join('');
+        }
+        
+        function downloadAllLogs() {
+            const logs = localStorage.getItem('login_logs_file') || '=== LOG FILE: login.log.txt ===\n\n';
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = LOG_FILE;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            writeLog('Log file downloaded', 'INFO');
+        }
+        
+        // ==================== LOGIN SYSTEM ====================
         function handleLogin(event) {
             event.preventDefault();
             
@@ -188,15 +285,21 @@
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('errorMessage');
             
+            writeLog(`Login attempt with username: ${username}`, 'INFO');
+            
             // Validasi login
             if (username === 'admin_klinik' && password === 'adminklinik123') {
+                writeLog(`Login SUCCESS for user: ${username} from IP: ${getClientIP()}`, 'SUCCESS');
+                
                 // Simpan session login
                 sessionStorage.setItem('isLoggedIn', 'true');
                 sessionStorage.setItem('username', username);
+                sessionStorage.setItem('loginTime', new Date().toISOString());
                 
                 // Redirect ke dashboard
                 window.location.href = 'dashboard.html';
             } else {
+                writeLog(`Login FAILED for user: ${username} - Wrong password`, 'FAILED');
                 errorDiv.style.display = 'block';
                 errorDiv.textContent = 'Username atau password salah!';
                 
@@ -208,11 +311,25 @@
             }
         }
         
+        // Fungsi dummy untuk IP (karena client-side tidak bisa dapat IP asli)
+        function getClientIP() {
+            return '127.0.0.1 (local)';
+        }
+        
         // Cek apakah sudah login
         window.onload = function() {
+            writeLog('Login page accessed', 'INFO');
+            displayLogs();
+            
             if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                writeLog('User already logged in, redirecting to dashboard', 'INFO');
                 window.location.href = 'dashboard.html';
             }
+        };
+        
+        // Download log saat halaman ditutup
+        window.onbeforeunload = function() {
+            downloadAllLogs();
         };
         
         // Tambahan style untuk animasi shake

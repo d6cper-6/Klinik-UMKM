@@ -201,6 +201,59 @@
             border: 1px solid #ffeeba;
         }
         
+        /* Log Container */
+        .log-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .log-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .btn-download-log {
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .btn-download-log:hover {
+            background: #45a049;
+        }
+        
+        .log-entries {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 12px;
+            background: #f8f9fa;
+        }
+        
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px dashed #e0e0e0;
+            color: #666;
+            font-family: monospace;
+        }
+        
         /* Responsive */
         @media (max-width: 640px) {
             .upload-area {
@@ -218,7 +271,7 @@
     <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="dashboard.html" class="back-btn">← Kembali</a>
+            <a href="dashboard.html" class="back-btn" onclick="logBackToDashboard()">← Kembali</a>
             <h1 id="clinicName">KLINIK UMKM</h1>
             <div style="width: 40px;"></div>
         </div>
@@ -287,9 +340,86 @@
                 Import CSV
             </button>
         </div>
+        
+        <!-- Import Log Viewer -->
+        <div class="log-container">
+            <div class="log-header">
+                <span class="log-title">📋 Import/Export Activity Log</span>
+                <button class="btn-download-log" onclick="downloadLog()">⬇️ Download Log</button>
+            </div>
+            <div id="importLogs" class="log-entries"></div>
+        </div>
     </div>
     
     <script>
+        // ==================== LOGGING SYSTEM ====================
+        const LOG_FILE = 'import.log.txt';
+        
+        function writeLog(message, type = 'INFO') {
+            const timestamp = new Date().toLocaleString('id-ID', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            const user = sessionStorage.getItem('username') || 'unknown';
+            const logEntry = `[${timestamp}] [${type}] [User: ${user}] ${message}`;
+            
+            // Simpan ke localStorage
+            const logs = JSON.parse(localStorage.getItem('import_logs') || '[]');
+            logs.push(logEntry);
+            
+            if (logs.length > 100) {
+                logs.shift();
+            }
+            
+            localStorage.setItem('import_logs', JSON.stringify(logs));
+            
+            // Tampilkan
+            displayLogs();
+            
+            // Simpan ke file
+            let existingLogs = localStorage.getItem('import_logs_file') || '';
+            existingLogs += logEntry + '\n';
+            localStorage.setItem('import_logs_file', existingLogs);
+        }
+        
+        function displayLogs() {
+            const logs = JSON.parse(localStorage.getItem('import_logs') || '[]');
+            const container = document.getElementById('importLogs');
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="log-entry">Belum ada aktivitas import/export</div>';
+                return;
+            }
+            
+            container.innerHTML = logs.reverse().map(log => 
+                `<div class="log-entry">${log}</div>`
+            ).join('');
+        }
+        
+        function downloadLog() {
+            const logs = localStorage.getItem('import_logs_file') || '=== LOG FILE: import.log.txt ===\n\n';
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = LOG_FILE;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            writeLog('Import log file downloaded', 'INFO');
+        }
+        
+        function logBackToDashboard() {
+            writeLog('Back to dashboard clicked', 'NAVIGATION');
+        }
+        
+        // ==================== IMPORT/EXPORT FUNCTIONS ====================
+        
         // Cek login
         if (!sessionStorage.getItem('isLoggedIn')) {
             window.location.href = 'index.html';
@@ -303,6 +433,8 @@
         
         // Export JSON
         function exportJSON() {
+            writeLog('Export JSON initiated', 'EXPORT');
+            
             const patients = JSON.parse(localStorage.getItem('patients') || '[]');
             const dataStr = JSON.stringify(patients, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
@@ -314,14 +446,18 @@
             linkElement.setAttribute('download', exportFileDefaultName);
             linkElement.click();
             
+            writeLog(`JSON export completed: ${patients.length} patients`, 'EXPORT_SUCCESS');
             showAlert('Data berhasil diexport!', 'success');
         }
         
         // Export CSV
         function exportCSV() {
+            writeLog('Export CSV initiated', 'EXPORT');
+            
             const patients = JSON.parse(localStorage.getItem('patients') || '[]');
             
             if (patients.length === 0) {
+                writeLog('CSV export failed: No data', 'EXPORT_FAILED');
                 showAlert('Tidak ada data untuk diexport!', 'warning');
                 return;
             }
@@ -339,7 +475,7 @@
                 p.tanggalLahir || '',
                 p.jenisKelamin,
                 p.noTelp,
-                p.alamat.replace(/,/g, ';') // Ganti koma dengan titik koma
+                p.alamat.replace(/,/g, ';')
             ]);
             
             // Gabungkan
@@ -357,6 +493,7 @@
             linkElement.setAttribute('download', exportFileDefaultName);
             linkElement.click();
             
+            writeLog(`CSV export completed: ${patients.length} patients`, 'EXPORT_SUCCESS');
             showAlert('Data berhasil diexport!', 'success');
         }
         
@@ -365,10 +502,14 @@
             const file = input.files[0];
             if (!file) return;
             
+            writeLog(`JSON file selected: ${file.name} (${file.size} bytes)`, 'FILE_SELECTED');
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     jsonData = JSON.parse(e.target.result);
+                    
+                    writeLog(`JSON parsed successfully: ${jsonData.length} records found`, 'PARSE_SUCCESS');
                     
                     // Tampilkan preview
                     const preview = document.getElementById('jsonPreview');
@@ -385,6 +526,7 @@
                     
                     preview.style.display = 'block';
                 } catch (error) {
+                    writeLog(`JSON parse error: ${error.message}`, 'PARSE_ERROR');
                     showAlert('File JSON tidak valid!', 'warning');
                 }
             };
@@ -394,18 +536,25 @@
         // Import JSON
         function importJSON() {
             if (!jsonData) {
+                writeLog('JSON import failed: No file selected', 'IMPORT_FAILED');
                 showAlert('Pilih file JSON terlebih dahulu!', 'warning');
                 return;
             }
             
+            writeLog(`JSON import initiated with ${jsonData.length} records`, 'IMPORT');
+            
             if (confirm('Import JSON akan MENGGANTI semua data yang ada. Lanjutkan?')) {
                 localStorage.setItem('patients', JSON.stringify(jsonData));
+                
+                writeLog(`JSON import completed: ${jsonData.length} records imported`, 'IMPORT_SUCCESS');
                 showAlert('Data berhasil diimport!', 'success');
                 
                 // Reset
                 jsonData = null;
                 document.getElementById('jsonFile').value = '';
                 document.getElementById('jsonPreview').style.display = 'none';
+            } else {
+                writeLog('JSON import cancelled by user', 'IMPORT_CANCELLED');
             }
         }
         
@@ -414,10 +563,14 @@
             const file = input.files[0];
             if (!file) return;
             
+            writeLog(`CSV file selected: ${file.name} (${file.size} bytes)`, 'FILE_SELECTED');
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 const lines = e.target.result.split('\n');
                 const headers = lines[0].split(',');
+                
+                writeLog(`CSV headers: ${headers.join(' | ')}`, 'PARSE_SUCCESS');
                 
                 // Parse sederhana
                 csvData = [];
@@ -446,9 +599,12 @@
         function importCSV() {
             const file = document.getElementById('csvFile').files[0];
             if (!file) {
+                writeLog('CSV import failed: No file selected', 'IMPORT_FAILED');
                 showAlert('Pilih file CSV terlebih dahulu!', 'warning');
                 return;
             }
+            
+            writeLog('CSV import initiated', 'IMPORT');
             
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -485,6 +641,8 @@
                 const merged = [...existingPatients, ...newPatients];
                 
                 localStorage.setItem('patients', JSON.stringify(merged));
+                
+                writeLog(`CSV import completed: ${newPatients.length} new records imported`, 'IMPORT_SUCCESS');
                 showAlert(`${newPatients.length} data berhasil diimport!`, 'success');
                 
                 // Reset
@@ -513,6 +671,12 @@
                 alertDiv.style.display = 'none';
             }, 3000);
         }
+        
+        // Load logs saat halaman dimuat
+        window.onload = function() {
+            writeLog('Import page accessed', 'INFO');
+            displayLogs();
+        };
     </script>
 </body>
 </html>
