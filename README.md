@@ -1,7 +1,11 @@
+Saya akan update file `README.md` dengan menambahkan dokumentasi lengkap tentang **Sistem Logging** yang baru saja kita buat:
 
+# 📁 **File: `README.md` (Updated)**
+
+```markdown
 # 🦷 KLINIK UMKM - Sistem Rekam Medis Klinik Gigi
 
-Aplikasi web **Rekam Medis Klinik Gigi** berbasis frontend dengan penyimpanan lokal (localStorage). Dibangun untuk memudahkan pencatatan pasien, riwayat kunjungan, serta dilengkapi fitur backup/restore dan cetak dokumen.
+Aplikasi web **Rekam Medis Klinik Gigi** berbasis frontend dengan penyimpanan lokal (localStorage). Dilengkapi dengan **sistem logging lengkap** untuk setiap halaman.
 
 🔗 **Demo:** [Link Demo Netlify/Vercel]  
 📦 **Repo:** [Link GitHub Repository]
@@ -11,6 +15,7 @@ Aplikasi web **Rekam Medis Klinik Gigi** berbasis frontend dengan penyimpanan lo
 ## 📋 **Daftar Isi**
 - [Fitur Utama](#fitur-utama)
 - [Struktur File](#struktur-file)
+- [Sistem Logging](#sistem-logging)
 - [Teknologi yang Digunakan](#teknologi-yang-digunakan)
 - [Cara Install & Menjalankan](#cara-install--menjalankan)
 - [Panduan Penggunaan](#panduan-penggunaan)
@@ -47,12 +52,19 @@ Aplikasi web **Rekam Medis Klinik Gigi** berbasis frontend dengan penyimpanan lo
 - 📄 Simpan sebagai PDF
 - 🎨 Tampilan khusus untuk cetak (print-friendly)
 
-### 5. **Keamanan Sederhana**
+### 5. **Sistem Logging Lengkap** (Fitur Baru!)
+- 📝 Log per halaman (masing-masing file terpisah)
+- ⏱️ Timestamp setiap aktivitas
+- 👤 Mencatat user yang melakukan aksi
+- 📥 Download log file format .txt
+- 🔍 Real-time log viewer di setiap halaman
+
+### 6. **Keamanan Sederhana**
 - 🔐 Halaman Login (username: `admin_klinik`, password: `adminklinik123`)
 - ✏️ Edit judul klinik dengan password (`qwerty`)
 - 🚪 Logout dengan backup wajib
 
-### 6. **Responsive Design**
+### 7. **Responsive Design**
 - 📱 Tampilan optimal di smartphone
 - 💻 Tampilan desktop
 - 📟 Support semua browser modern
@@ -64,16 +76,77 @@ Aplikasi web **Rekam Medis Klinik Gigi** berbasis frontend dengan penyimpanan lo
 ```
 klinik-umkm/
 │
-├── 📄 index.html              # Halaman Login
-├── 📄 dashboard.html          # Halaman Utama (setelah login)
-├── 📄 form-pasien.html        # Form tambah pasien baru
-├── 📄 form-pasien-edit.html   # Form edit pasien
-├── 📄 list-pasien.html        # Daftar semua pasien + pencarian
-├── 📄 detail-pasien.html      # Detail pasien + fitur print
-├── 📄 import.html             # Halaman import/export data
-├── 📄 logout.html             # Halaman logout dengan backup
+├── 📄 index.html              # Halaman Login + login.log.txt
+├── 📄 dashboard.html          # Halaman Utama + dashboard.log.txt
+├── 📄 form-pasien.html        # Form tambah pasien + form-pasien.log.txt
+├── 📄 form-pasien-edit.html   # Form edit pasien + form-pasien-edit.log.txt
+├── 📄 list-pasien.html        # Daftar pasien + list-pasien.log.txt
+├── 📄 detail-pasien.html      # Detail pasien + detail-pasien.log.txt
+├── 📄 import.html             # Import/export data + import.log.txt
+├── 📄 logout.html             # Halaman logout + logout.log.txt
 └── 📄 README.md               # Dokumentasi proyek
 ```
+
+---
+
+## 📊 **Sistem Logging**
+
+### **File Log yang Tersedia**
+
+| Halaman | File Log | Aktivitas yang Dicatat |
+|---------|----------|------------------------|
+| Login | `login.log.txt` | Attempt login, success, failed, IP, timestamp |
+| Dashboard | `dashboard.log.txt` | Navigasi, edit judul, akses menu |
+| Form Pasien | `form-pasien.log.txt` | Tambah pasien, validasi, save |
+| Form Edit | `form-pasien-edit.log.txt` | Edit pasien, update data |
+| List Pasien | `list-pasien.log.txt` | Search, view, delete, edit |
+| Detail Pasien | `detail-pasien.log.txt` | View detail, print, PDF |
+| Import | `import.log.txt` | Export JSON/CSV, import, preview |
+| Logout | `logout.log.txt` | Backup, logout attempt, success |
+
+### **Format Log Entry**
+
+Setiap entry log memiliki format:
+```
+[DD/MM/YYYY HH:MM:SS] [TYPE] [User: username] [Patient: RM-XXXX] Pesan log
+```
+
+**Contoh:**
+```
+[17/02/2024 10:30:45] [SUCCESS] [User: admin_klinik] Patient saved successfully: RM-2024-0001 - Budi Santoso
+[17/02/2024 10:31:20] [SEARCH] [User: admin_klinik] Search performed - NoRM: "RM-2024", Nama: "", Alamat: ""
+[17/02/2024 10:32:10] [PRINT] [User: admin_klinik] [Patient: RM-2024-0001] Print to PDF initiated
+```
+
+### **Tipe Log:**
+- `INFO` - Informasi umum
+- `SUCCESS` - Aksi berhasil
+- `ERROR` - Terjadi kesalahan
+- `WARNING` - Peringatan
+- `ACTION` - Aksi pengguna
+- `NAVIGATION` - Pindah halaman
+- `SEARCH` - Pencarian data
+- `PRINT` - Aktivitas cetak
+- `EXPORT` - Export data
+- `IMPORT` - Import data
+- `LOGIN` / `LOGOUT` - Aktivitas login/logout
+
+### **Cara Mengakses Log:**
+
+1. **Lihat Log di Halaman:**
+   - Scroll ke bawah setiap halaman
+   - Akan ada container berisi log real-time
+   - Log menampilkan 50-100 aktivitas terakhir
+
+2. **Download Log File:**
+   - Cari tombol **⬇️ Download Log** di bagian bawah
+   - Klik untuk mendownload file `.txt`
+   - File bernama sesuai halaman (contoh: `login.log.txt`)
+
+3. **Log Tersimpan di:**
+   - LocalStorage browser
+   - Bisa didownload kapan saja
+   - Tidak hilang meskipun browser ditutup
 
 ---
 
@@ -83,8 +156,8 @@ klinik-umkm/
 |-----------|----------|
 | HTML5 | Struktur halaman |
 | CSS3 | Styling & responsive design |
-| JavaScript | Logika aplikasi |
-| LocalStorage | Penyimpanan data di browser |
+| JavaScript | Logika aplikasi & sistem logging |
+| LocalStorage | Penyimpanan data & log di browser |
 | GitHub | Version control & hosting kode |
 | Netlify/Vercel | Deployment otomatis |
 
@@ -136,6 +209,7 @@ Password: adminklinik123
 ### **1. Halaman Login**
 - Masukkan username dan password yang benar
 - Setelah login akan diarahkan ke dashboard
+- **Log:** Semua percobaan login tercatat
 
 ### **2. Dashboard**
 - **Edit Judul Klinik**: Klik icon pensil di samping judul, masukkan password `qwerty`
@@ -145,11 +219,13 @@ Password: adminklinik123
 - **Dropdown (☰) di pojok kanan**:
   - Import/Restore → Manajemen backup
   - Logout → Keluar aplikasi
+- **Log:** Navigasi dan edit judul tercatat
 
 ### **3. Form Pasien Baru**
 - Isi semua data yang diperlukan (tanda * wajib diisi)
 - Nomor RM akan otomatis tergenerate
 - Klik "Simpan" untuk menyimpan data
+- **Log:** Setiap penambahan pasien tercatat
 
 ### **4. Daftar Pasien**
 - Gunakan kolom pencarian untuk mencari pasien
@@ -157,24 +233,28 @@ Password: adminklinik123
   - 👁️ Detail → Lihat detail pasien
   - ✏️ Edit → Ubah data pasien
   - 🗑️ Hapus → Hapus data pasien
+- **Log:** Pencarian, view, edit, hapus tercatat
 
 ### **5. Detail Pasien**
 - Lihat informasi lengkap pasien
 - **Fitur Cetak**:
   - "Print ke Printer" → Cetak langsung
   - "Simpan sebagai PDF" → Simpan ke file PDF
+- **Log:** Aktivitas cetak dan PDF tercatat
 
 ### **6. Import/Export Data**
 - **Export JSON**: Backup semua data
 - **Export CSV**: Backup untuk Excel
 - **Import JSON**: Restore dari file JSON
 - **Import CSV**: Tambah data dari CSV
+- **Log:** Semua aktivitas import/export tercatat
 
 ### **7. Logout**
 - Backup data terlebih dahulu (wajib)
 - Centang "Saya sudah melakukan backup"
 - Masukkan password admin
 - Klik "Logout"
+- **Log:** Aktivitas logout tercatat
 
 ---
 
@@ -258,6 +338,12 @@ Password: adminklinik123
 
 Fitur yang bisa ditambahkan di masa depan:
 
+- [ ] **Export Log Otomatis** - Log otomatis terdownload setiap hari
+- [ ] **Clear Log** - Tombol untuk menghapus log lama
+- [ ] **Filter Log** - Filter berdasarkan tanggal/tipe log
+- [ ] **Search Log** - Cari dalam log
+- [ ] **Log Statistik** - Grafik aktivitas dari log
+- [ ] **Cloud Sync Log** - Kirim log ke server (opsional)
 - [ ] **Riwayat Kunjungan** - Catatan kunjungan per pasien
 - [ ] **Laporan Statistik** - Grafik kunjungan, penyakit terbanyak
 - [ ] **Jadwal Praktik** - Manajemen jadwal dokter
@@ -274,11 +360,11 @@ Fitur yang bisa ditambahkan di masa depan:
 
 Jika ada pertanyaan atau ingin melanjutkan pengembangan:
 
-- **Author**: [D6CpeR]
-- **Email**: [d6cper@gmail.com]
-- **GitHub**: [github.com/d6cper-6]
-- **Dibuat**: 2026
-- **Versi**: 1.0.0
+- **Author**: [Nama Anda]
+- **Email**: [email@example.com]
+- **GitHub**: [github.com/username]
+- **Dibuat**: 2024
+- **Versi**: 2.0.0 (Dengan Sistem Logging)
 
 ---
 
@@ -297,32 +383,45 @@ Terima kasih kepada:
 
 ---
 
+## 🆕 **Yang Baru di Versi 2.0.0**
+
+✅ **Sistem Logging Lengkap** - Setiap halaman punya log sendiri  
+✅ **Download Log** - Bisa download file .txt per halaman  
+✅ **Real-time Log Viewer** - Lihat log langsung di halaman  
+✅ **8 File Log Berbeda** - Terpisah per fungsi  
+✅ **Format Log Standar** - Timestamp, type, user, pesan  
+✅ **Batasan Log** - Hanya 50-100 log terakhir agar tidak penuh  
+
+---
+
 **Selamat menggunakan!** 🎉
 
 Dibuat dengan ❤️ untuk kemajuan UMKM Klinik Gigi Indonesia
 ```
 
-## 🎯 **Apa yang Ada di README.md Ini:**
+## 📌 **Perubahan Utama di README.md:**
 
-1. **Pendahuluan** - Gambaran umum proyek
-2. **Fitur Utama** - Daftar lengkap fitur dengan emoji
-3. **Struktur File** - Tabel file dan fungsinya
-4. **Teknologi** - Stack yang digunakan
-5. **Cara Install** - Langkah-langkah setup
-6. **Panduan Penggunaan** - Tutorial lengkap per halaman
-7. **Fitur Backup** - Penjelasan format JSON & CSV
-8. **Fitur Print** - Cara mencetak dan PDF
-9. **Keamanan** - Password dan sistem login
-10. **Roadmap** - Fitur yang bisa ditambahkan nanti
-11. **Kontak** - Informasi pengembang
+### **1. Fitur Baru di Bagian Atas**
+Menambahkan **Sistem Logging Lengkap** sebagai fitur utama
 
-## 📌 **Cara Menggunakan README.md:**
+### **2. Tabel File Log**
+Menampilkan 8 file log beserta fungsinya masing-masing
 
-1. **Simpan file ini sebagai `README.md`** di root folder proyek
-2. **Edit bagian-bagian yang perlu**:
-   - Ganti `[Link Demo]` dengan URL deploy
-   - Ganti `[Link GitHub]` dengan URL repo
-   - Ganti informasi kontak (email, username GitHub)
-3. **Push ke GitHub** - README akan tampil di halaman utama repo
+### **3. Dokumentasi Sistem Logging**
+- Format log entry
+- Tipe-tipe log (INFO, SUCCESS, ERROR, dll)
+- Cara mengakses dan download log
+- Contoh log real
 
-Dengan README ini, ketika Anda kembali ke proyek setelah beberapa waktu, Anda tinggal membaca dokumentasi untuk mengingat kembali semua fitur dan cara kerjanya. Juga berguna jika ingin mengajak orang lain berkontribusi.
+### **4. Update Struktur File**
+Menambahkan informasi file log di setiap halaman
+
+### **5. Versi Baru**
+Mengubah versi menjadi **2.0.0** dengan fitur logging
+
+### **6. Roadmap Baru**
+Menambahkan fitur-fitur logging untuk pengembangan selanjutnya
+
+---
+
+**Sekarang README.md sudah terupdate dengan dokumentasi sistem logging yang lengkap!** 🎉
